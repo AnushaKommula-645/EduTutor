@@ -18,15 +18,15 @@
             justify-content: center;
             align-items: flex-start; /* Align to top for longer content */
             min-height: 100vh; /* Full viewport height */
-            background: linear-gradient(135deg, #f4f4f4 0%, #e0f2f7 100%); /* Adjusted background to match RAG page */
+            background: linear-gradient(135deg, #f4f4f4 0%, #e0f2f7 100%); /* Consistent background */
             color: #333; /* Default text color */
             overflow-y: auto; /* Allow scrolling if content overflows */
-            position: relative; /* Set body as positioning context for absolute button */
+            position: relative;
             padding-top: 2rem;
             padding-bottom: 2rem;
         }
 
-        /* Back Button Styling - Moved outside container and to the far left */
+        /* Back Button Styling */
         .back-button {
             position: absolute; /* Position relative to the body */
             top: 2rem; /* Aligned with body's padding-top */
@@ -95,7 +95,7 @@
             padding: 1rem;
             height: 400px; /* Increased height */
             overflow-y: auto;
-            background: linear-gradient(to right, #9ae7ff, #24cfff);
+            background: linear-gradient(135deg, #c4eafa 0%, #4ac8fa 100%); /* Subtle gradient for depth */
             margin-bottom: 1.5rem;
             box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
             scroll-behavior: smooth;
@@ -147,7 +147,7 @@
         /* Bot message container: Aligns to the left */
         .bot-message-outer {
             justify-content: flex-start; /* Pushes entire message block to the left */
-            /* flex-direction is handled by JS for order within this block */
+            flex-direction: row; /* Places avatar first, then bubble visually */
         }
 
         /* Avatar Styling */
@@ -188,8 +188,8 @@
 
         /* User message bubble color (light blue) */
         .user-message-outer .message-bubble {
-            background-color: #007292;
-            color: white; /* Light blue for user messages */
+            background-color: #006480;
+            color: white;
             border-bottom-right-radius: 0.3rem; /* Sharpen one corner for speech bubble effect */
         }
 
@@ -360,7 +360,7 @@
             .container {
                 padding: 1.5rem;
                 border-radius: 1rem;
-                max-width: 1600px;
+                max-width: 1600px; /* Adjusted max-width for smaller screens */
                 width: 95%;
             }
             h2 {
@@ -430,7 +430,7 @@
 </head>
 <body>
     <!-- Back Button - NOW OUTSIDE THE CONTAINER -->
-    <a href="/options" class="back-button">
+    <a href="/options" class="back-button"> <!-- Changed href to /options -->
         <i class="fas fa-arrow-left"></i> Back to Options
     </a>
 
@@ -456,13 +456,24 @@
         const chatForm = document.getElementById('chat-form');
         const userInput = document.getElementById('user-input');
         const notepad = document.getElementById('notepad');
-        notepad.value = ''; // Initialize notepad as empty
+
         // Sample avatar URLs
         const userAvatar = '/static/images/user.png'; // Placeholder for User - App color
         const botAvatar = '/static/images/bot.png'; // Placeholder for Bot - Dark gray
 
-        // Chat history to send to LLM for context
-        let chatHistory = [];
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initial bot greeting
+            const initialBotMessage = 'Welcome to EduTutor Chatbot! How can I help you today?';
+            appendMessage('bot', initialBotMessage);
+
+            // Always reset notepad and remove saved notes on page load
+            localStorage.removeItem('edututorChatbotNotes');
+            notepad.value = '';
+            // Save notes to localStorage whenever notepad content changes
+            notepad.addEventListener('input', () => {
+                localStorage.setItem('edututorChatbotNotes', notepad.value);
+            });
+        });
 
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -471,46 +482,46 @@
 
             // Append user message
             appendMessage('user', message);
-            chatHistory.push({ role: "user", parts: [{ text: message }] }); // Add to chat history
             userInput.value = '';
 
             // Simulate bot typing indicator
             const thinkingMessageDiv = appendMessage('bot', 'EduTutor is thinking...', true);
 
             try {
-                // Call Gemini API
-                const payload = { contents: chatHistory };
-                const apiKey = "AIzaSyBEmgn35jP1g62GVSfOmhfHBOMki4snsaY";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                // Prepare form data to send to FastAPI backend
+                const formData = new FormData();
+                formData.append('message', message);
 
-                const response = await fetch(apiUrl, {
+                // Send message to FastAPI backend at /chatbot/api
+                const response = await fetch('/chatbot/api', { // Corrected endpoint URL
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: formData // Send as FormData as per FastAPI's Form(...)
                 });
 
-                const result = await response.json();
+                const data = await response.json();
 
                 // Remove thinking indicator
                 if (thinkingMessageDiv) thinkingMessageDiv.remove();
 
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    const botResponse = result.candidates[0].content.parts[0].text;
-                    // Format bot response before appending
-                    appendMessage('bot', botResponse); // formatBotResponse will be called internally
-                    chatHistory.push({ role: "model", parts: [{ text: botResponse }] }); // Add bot response to history
+                if (response.ok) {
+                    if (data.response) {
+                        appendMessage('bot', data.response);
+                    } else {
+                        // If backend returns OK but no 'response' field
+                        showModal('The AI responded, but with no readable message. Please try again or check server logs.');
+                        console.error('Backend returned an empty or unformatted response:', data);
+                    }
                 } else {
-                    appendMessage('bot', 'No response from the AI. Please try again.');
-                    console.error('Gemini API returned an unexpected structure:', result);
+                    // Handle non-OK HTTP responses (e.g., 500 error from FastAPI)
+                    showModal(`Error from server: ${data.detail || 'Unknown error'}. Please check your FastAPI server logs.`);
+                    console.error('Server error response:', data);
                 }
 
             } catch (err) {
-                // Remove thinking indicator and show error
+                // Handle network errors or issues with the fetch itself
                 if (thinkingMessageDiv) thinkingMessageDiv.remove();
-                appendMessage('bot', 'Error contacting the AI. Please check your network or try again.');
-                console.error('Gemini API call failed:', err);
+                showModal('Could not connect to the backend server. Please ensure your FastAPI app is running and accessible.');
+                console.error('Fetch API call failed:', err);
             }
         });
 
@@ -532,7 +543,7 @@
             } else {
                 // Format bot response for better readability
                 if (sender === 'bot') {
-                    messageBubble.innerHTML = formatBotResponse(text); // Use formatBotResponse for bot text
+                    messageBubble.innerHTML = formatBotResponse(text);
                 } else {
                     messageBubble.textContent = text;
                 }
@@ -552,7 +563,7 @@
             chatWindow.appendChild(messageContainer);
             chatWindow.scrollTop = chatWindow.scrollHeight; // Auto-scroll to bottom
 
-            return messageContainer; // Return the message container for potential removal/update
+            return messageContainer;
         }
 
         // New function to format bot responses
@@ -578,7 +589,6 @@
 
             return paragraphs;
         }
-
 
         // Function to save notes to a local file
         function saveNotes() {
@@ -636,23 +646,12 @@
             document.body.appendChild(modal);
         }
 
-
-        // Load any saved notes from localStorage on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedNotes = localStorage.getItem('edututorChatbotNotes');
-            if (savedNotes) {
-                notepad.value = savedNotes;
+        // Event listener for Enter key on user input
+        chatForm.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) { // Prevents sending on Shift+Enter for multiline input
+                e.preventDefault(); // Prevent default form submission on Enter
+                chatForm.dispatchEvent(new Event('submit')); // Trigger form submission
             }
-
-            // Save notes to localStorage whenever notepad content changes
-            notepad.addEventListener('input', () => {
-                localStorage.setItem('edututorChatbotNotes', notepad.value);
-            });
-
-            // Initial bot greeting
-            const initialBotMessage = 'Welcome to EduTutor Chatbot! How can I help you today?';
-            appendMessage('bot', initialBotMessage);
-            chatHistory.push({ role: "model", parts: [{ text: initialBotMessage }] });
         });
     </script>
 </body>

@@ -1,11 +1,25 @@
 import re
 from ibm_watsonx_ai.foundation_models import ModelInference
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # Loads variables from .env
+
+api_key = os.getenv("IBMs_API_KEY")
+project_id = os.getenv("IBM_PROJECT_ID")
+base_url = os.getenv("IBM_BASE_URL")
+model_id = os.getenv("IBM_MODEL_ID")
+
+print("IBM_API_KEY:", api_key)
+print("IBM_PROJECT_ID:", project_id)
+print("IBM_BASE_URL:", base_url)
+print("IBM_MODEL_ID:", model_id)
 
 # Use your IBM credentials and model id here (same as your code)
-api_key = "S8zKH7B-Pjd0RbxuOgUZc4gJOmPhAq14kMn-jDKc35xe"
-project_id = "9554d7f6-08ab-44a4-a5ec-6012e5ca2b2c"
-base_url = "https://eu-de.ml.cloud.ibm.com"
-model_id = "ibm/granite-3-2b-instruct"
+# api_key = "S8zKH7B-Pjd0RbxuOgUZc4gJOmPhAq14kMn-jDKc35xe"
+# project_id = "9554d7f6-08ab-44a4-a5ec-6012e5ca2b2c"
+# base_url = "https://eu-de.ml.cloud.ibm.com"
+# model_id = "ibm/granite-3-2b-instruct"
 
 def truncate_prompt(prompt, max_words=1500):
     words = prompt.split()

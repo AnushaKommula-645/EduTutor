@@ -1,11 +1,13 @@
 import requests
 from bs4 import BeautifulSoup
-import os
 import google.generativeai as genai
+from dotenv import load_dotenv
+import os
 
-# Configure Gemini API key
-genai.configure(api_key="AIzaSyBEmgn35jP1g62GVSfOmhfHBOMki4snsaY")
-#genai.configure(api_key=os.environ.get("GOOGLE_API_KEY", ""))
+load_dotenv()  # Loads variables from .env
+
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+print("GEMINI_API_KEY:", os.getenv("GEMINI_API_KEY"))
 
 def extract_text_from_url(url: str) -> str:
     try:

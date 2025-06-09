@@ -59,8 +59,8 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Soft, larger shadow */
             padding: 2.5rem; /* Increased padding */
             text-align: center;
-            width: 90%;
-            max-width: 1400px;
+            width: 90%; /* Keep wider width as requested previously */
+            max-width: 1400px; /* Increased max-width for very large screens */
             box-sizing: border-box; /* Include padding in width calculation */
             animation: fadeInScale 0.8s ease-out forwards; /* Entry animation */
             margin-bottom: 2rem; /* Space below container */
@@ -95,7 +95,7 @@
             padding: 1rem;
             height: 400px; /* Increased height */
             overflow-y: auto;
-            background: linear-gradient(to right, #9ae7ff, #24cfff);
+            background: linear-gradient(135deg, #c4eafa 0%, #4ac8fa 100%); /* Subtle gradient for depth */
             margin-bottom: 1.5rem;
             box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
             scroll-behavior: smooth;
@@ -142,13 +142,13 @@
         /* User message container: Aligns to the right, bubble first, then avatar */
         .user-message-outer {
             justify-content: flex-end; /* Pushes entire message block to the right */
-            flex-direction: row; /* CRITICAL CHANGE: Places message bubble first, then avatar visually */
+            flex-direction: row; /* Places message bubble first, then avatar visually */
         }
 
         /* Bot message container: Aligns to the left, avatar first, then bubble */
         .bot-message-outer {
             justify-content: flex-start; /* Pushes entire message block to the left */
-            flex-direction: row; /* Places avatar first, then bubble VISUALLY */
+            flex-direction: row; /* Places avatar first, then bubble visually */
         }
 
         /* Avatar Styling - Consistent with Chatbot page */
@@ -162,7 +162,7 @@
             border: none;
         }
 
-        /* Spacing for user avatar (on the right of the bubble) */
+        /* Spacing for user avatar (on the right of the bubble) - Consistent with Chatbot page */
         .user-message-outer .avatar {
             margin-left: 1rem; /* Space between user bubble and user avatar */
             margin-right: 0; /* Ensure no extra margin */
@@ -189,14 +189,14 @@
 
         /* User message bubble color (light blue) - Consistent with Chatbot page */
         .user-message-outer .message-bubble {
-            background-color: #007292;
+            background-color: #006480;
             color: white;
             border-bottom-right-radius: 0.3rem; /* Sharpen one corner for speech bubble effect */
         }
 
         /* Bot message bubble color (light gray) - Consistent with Chatbot page */
         .bot-message-outer .message-bubble {
-            background-color: #ffffff;
+            background-color: #ffffff; /* Light gray for bot messages */
             border-bottom-left-radius: 0.3rem; /* Sharpen one corner for speech bubble effect */
         }
 
@@ -313,7 +313,7 @@
         }
 
 
-        /* Modal for save notes - Consistent with Chatbot page */
+        /* Modal for messages */
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0,0,0,0.5);
@@ -470,13 +470,15 @@
         const botAvatar = '/static/images/bot.png'; // Placeholder for Bot - Dark gray
 
         let extractedContext = ''; // This will store the content extracted from the URL
-        let chatHistory = []; // For Gemini API conversation history
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Always reset notepad and remove saved notes on page load
+            localStorage.removeItem('edututorRagNotes');
+            notepad.value = '';
+
             // Initial bot greeting for RAG
             const initialBotMessage = 'Hello! Paste a URL and click "Extract Content" to begin your RAG session.';
             appendMessage('bot', initialBotMessage);
-            chatHistory.push({ role: "model", parts: [{ text: initialBotMessage }] });
 
             // Load any saved notes from localStorage on page load
             const savedNotes = localStorage.getItem('edututorRagNotes');
@@ -498,38 +500,43 @@
 
             // Show user's action in chat
             appendMessage('user', `Attempting to extract content from: ${url}`);
-            chatHistory.push({ role: "user", parts: [{ text: `Attempting to extract content from: ${url}` }] });
 
             // Show thinking message for bot
             const thinkingMessageDiv = appendMessage('bot', 'EduTutor is analyzing the URL and extracting content...', true);
 
             try {
-                // Fetch call to your RAG backend for content extraction
-                // Note: The actual content extraction logic is handled by your backend.
-                // This client-side code simulates the interaction.
                 const formData = new FormData();
                 formData.append('url', url);
-                const res = await fetch('/rag/api/extract', {
+
+                // Fetch call to FastAPI RAG extract endpoint
+                const response = await fetch('/rag/api/extract', {
                     method: 'POST',
-                    body: formData // Assuming your backend expects FormData
+                    body: formData
                 });
-                const data = await res.json();
+                const data = await response.json();
 
                 if (thinkingMessageDiv) thinkingMessageDiv.remove();
 
-                if (data.content && data.content.length > 0) {
-                    extractedContext = data.content;
-                    appendMessage('bot', `Content successfully extracted. You can now ask questions about the URL content.`);
-                    chatHistory.push({ role: "model", parts: [{ text: `Content successfully extracted.` }] });
-                } else if (data.error) {
-                    appendMessage('bot', `Error extracting content: ${data.error}. Please check the URL and try again.`);
-                    console.error('Extraction error:', data.error);
+                if (response.ok) {
+                    if (data.content && data.content.length > 0 && data.content !== "No readable content found on the page.") {
+                        extractedContext = data.content;
+                        appendMessage('bot', `Content successfully extracted. You can now ask questions about the URL content.`);
+                    } else if (data.content === "No readable content found on the page.") {
+                        appendMessage('bot', `Could not extract any meaningful content from the URL. It might be empty, protected, or an invalid format.`);
+                    } else if (data.error) {
+                        appendMessage('bot', `Error extracting content: ${data.error}. Please check the URL and try again.`);
+                        console.error('Extraction error:', data.error);
+                    } else {
+                        appendMessage('bot', 'An unexpected issue occurred during content extraction. Please try again.');
+                        console.error('Unexpected extraction response:', data);
+                    }
                 } else {
-                    appendMessage('bot', 'Could not extract any meaningful content from the URL. It might be empty, protected, or an invalid format.');
+                    showModal(`Error from server during extraction: ${data.detail || 'Unknown error'}. Please check your FastAPI server logs.`);
+                    console.error('Server error during extraction:', data);
                 }
             } catch (err) {
                 if (thinkingMessageDiv) thinkingMessageDiv.remove();
-                appendMessage('bot', 'Failed to connect to the extraction service. Please check your network and ensure the backend is running.');
+                showModal('Failed to connect to the extraction service. Please check your network and ensure the backend is running.');
                 console.error('Extract content API error:', err);
             }
         }
@@ -546,52 +553,44 @@
             }
 
             appendMessage('user', question);
-            chatHistory.push({ role: "user", parts: [{ text: question }] });
             questionInput.value = '';
 
             const thinkingMessageDiv = appendMessage('bot', 'EduTutor is thinking...', true);
 
             try {
-                // Call Gemini API for RAG
-                // Construct a prompt that guides the LLM to use the extracted context.
-                const ragPrompt = `Using ONLY the following content, answer the question: "${question}"\n\nContent: "${extractedContext}"\n\nIf the answer is not directly available in the provided content, state that you cannot find it within the given text.`;
+                const formData = new FormData();
+                formData.append('question', question);
+                formData.append('context', extractedContext); // Send the extracted context
 
-                const finalPayload = {
-                    contents: [...chatHistory.slice(-5), { role: "user", parts: [{ text: ragPrompt }] }] // Send last 5 turns + current RAG prompt
-                };
-
-                const apiKey = "AIzaSyBEmgn35jP1g62GVSfOmhfHBOMki4snsaY";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-                const response = await fetch(apiUrl, {
+                // Fetch call to FastAPI RAG ask endpoint
+                const response = await fetch('/rag/api/ask', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(finalPayload)
+                    body: formData
                 });
-
-                const result = await response.json();
+                const data = await response.json();
 
                 if (thinkingMessageDiv) thinkingMessageDiv.remove();
 
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    const botResponse = result.candidates[0].content.parts[0].text;
-                    appendMessage('bot', botResponse);
-                    chatHistory.push({ role: "model", parts: [{ text: botResponse }] });
+                if (response.ok) {
+                    if (data.answer) {
+                        appendMessage('bot', data.answer);
+                    } else {
+                        showModal('The AI responded, but with no readable answer. Please try rephrasing your question or checking server logs.');
+                        console.error('Backend returned empty or unformatted answer:', data);
+                    }
                 } else {
-                    appendMessage('bot', 'No answer from the AI based on the extracted content. Please try rephrasing your question or extracting new content.');
-                    console.error('Gemini API returned an unexpected structure:', result);
+                    showModal(`Error from server during asking: ${data.detail || 'Unknown error'}. Please check your FastAPI server logs.`);
+                    console.error('Server error during asking:', data);
                 }
 
             } catch (err) {
                 if (thinkingMessageDiv) thinkingMessageDiv.remove();
-                appendMessage('bot', 'Error contacting the AI service. Please check your network or try again.');
-                console.error('Gemini API call failed:', err);
+                showModal('Error contacting the AI service. Please check your network or try again.');
+                console.error('RAG ask API call failed:', err);
             }
         }
 
-        // Function to append messages with sender type and avatar - Reused from chatbot
+        // Function to append messages with sender type and avatar
         function appendMessage(sender, text, isThinking = false) {
             const messageContainer = document.createElement('div');
             messageContainer.classList.add('message-container');
@@ -616,16 +615,14 @@
             }
 
             // Controlling the order of appending elements directly in JS
-            // For user: Append bubble first, then avatar
-            // For bot: Append avatar first, then bubble
             if (sender === 'user') {
                 messageContainer.classList.add('user-message-outer');
-                messageContainer.appendChild(messageBubble); // Bubble first in DOM
-                messageContainer.appendChild(avatarImg);     // Then avatar in DOM
+                messageContainer.appendChild(messageBubble); // Bubble first
+                messageContainer.appendChild(avatarImg);     // Then avatar
             } else { // sender === 'bot'
                 messageContainer.classList.add('bot-message-outer');
-                messageContainer.appendChild(avatarImg);     // Avatar first in DOM
-                messageContainer.appendChild(messageBubble); // Then bubble in DOM
+                messageContainer.appendChild(avatarImg);     // Avatar first
+                messageContainer.appendChild(messageBubble); // Then bubble
             }
 
             chatWindow.appendChild(messageContainer);
@@ -634,7 +631,7 @@
             return messageContainer;
         }
 
-        // Function to format bot responses - Reused from chatbot
+        // Function to format bot responses
         function formatBotResponse(text) {
             const paragraphs = text.split('\n\n').map(para => {
                 let p = para.trim();
@@ -658,7 +655,7 @@
             return paragraphs;
         }
 
-        // Function to save notes to a local file (reused modal from chatbot)
+        // Function to save notes to a local file
         function saveNotes() {
             const text = notepad.value;
             const modal = document.createElement('div');
@@ -693,7 +690,7 @@
             document.body.appendChild(modal);
         }
 
-        // Custom modal function to replace alerts - Reused from chatbot
+        // Custom modal function to replace alerts
         function showModal(message, isError = false) {
             const modal = document.createElement('div');
             modal.classList.add('modal');
@@ -714,6 +711,21 @@
             document.body.appendChild(modal);
         }
 
+        // Event listener for Enter key on question input
+        questionInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                askQuestion();
+            }
+        });
+
+        // Event listener for Enter key on URL input
+        urlInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                extractContent();
+            }
+        });
     </script>
 </body>
 </html>
