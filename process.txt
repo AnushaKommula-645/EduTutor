@@ -1,0 +1,16 @@
+8. How to run
+Make sure Python 3.8+ installed.
+
+Create virtual environment and install dependencies:
+
+    python -m venv venv
+    venv\Scripts\activate     # Windows
+
+pip install -r requirements.txt
+Set your environment variable for Google API:
+    set GOOGLE_API_KEY=your_google_api_key        # Windows
+Run FastAPI with uvicorn:
+
+    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    Open browser at http://localhost:8000
+

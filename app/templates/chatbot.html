@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EduTutor Chatbot</title>
+    <!-- Google Fonts - Inter for a modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* General Body Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top for longer content */
+            min-height: 100vh; /* Full viewport height */
+            background: linear-gradient(135deg, #f4f4f4 0%, #e0f2f7 100%); /* Adjusted background to match RAG page */
+            color: #333; /* Default text color */
+            overflow-y: auto; /* Allow scrolling if content overflows */
+            position: relative; /* Set body as positioning context for absolute button */
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+
+        /* Back Button Styling - Moved outside container and to the far left */
+        .back-button {
+            position: absolute; /* Position relative to the body */
+            top: 2rem; /* Aligned with body's padding-top */
+            left: 2rem; /* Positioned 2rem from the left edge of the screen */
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            color: #1eade6;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease, transform 0.2s ease;
+            z-index: 10; /* Ensure it's above other elements */
+        }
+        .back-button:hover {
+            color: #1a96c9;
+            transform: translateX(-5px);
+        }
+        .back-button i {
+            font-size: 1.2rem;
+        }
+
+        /* Container Styling */
+        .container {
+            background-color: #ffffff; /* White background for the main card */
+            border-radius: 1.5rem; /* More pronounced rounded corners */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Soft, larger shadow */
+            padding: 2.5rem; /* Increased padding */
+            text-align: center;
+            width: 90%; /* Keep wider width as requested previously */
+            max-width: 1400px; /* Increased max-width for very large screens */
+            box-sizing: border-box; /* Include padding in width calculation */
+            animation: fadeInScale 0.8s ease-out forwards; /* Entry animation */
+            margin-bottom: 2rem; /* Space below container */
+            margin-left: auto; /* Center the container */
+            margin-right: auto; /* Center the container */
+        }
+
+        /* Entry Animation for the container */
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        h2 {
+            font-size: 2.5rem; /* Larger heading */
+            color: #1eade6; /* Main blue color */
+            margin-bottom: 2rem; /* Space below heading */
+            font-weight: 800; /* Extra bold */
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* Chat Window Styling */
+        .chat-window {
+            border: 1px solid #e0e0e0;
+            border-radius: 1rem;
+            padding: 1rem;
+            height: 400px; /* Increased height */
+            overflow-y: auto;
+            background: linear-gradient(to right, #9ae7ff, #24cfff);
+            margin-bottom: 1.5rem;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+            scroll-behavior: smooth;
+        }
+
+        /* Scrollbar Styling (Webkit - Chrome, Safari) */
+        .chat-window::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-window::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .chat-window::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .chat-window::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Message Styling - Outer container for alignment */
+        .message-container {
+            display: flex;
+            align-items: flex-start; /* Align avatar and text to top */
+            margin-bottom: 1rem; /* Space between messages */
+            animation: fadeInMessage 0.5s ease-out forwards; /* Animation for new messages */
+            width: 100%; /* Ensure container takes full width to allow alignment */
+        }
+
+        /* Message Entry Animation */
+        @keyframes fadeInMessage {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* User message container: Aligns to the right, bubble first, then avatar */
+        .user-message-outer {
+            justify-content: flex-end; /* Pushes entire message block to the right */
+            flex-direction: row; /* Places message bubble first, then avatar visually */
+        }
+
+        /* Bot message container: Aligns to the left */
+        .bot-message-outer {
+            justify-content: flex-start; /* Pushes entire message block to the left */
+            /* flex-direction is handled by JS for order within this block */
+        }
+
+        /* Avatar Styling */
+        .avatar {
+            width: 40px; /* Avatar size */
+            height: 40px;
+            border-radius: 50%; /* Circular avatar */
+            object-fit: cover; /* Ensure image covers the area */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0; /* Prevent avatar from shrinking */
+            border: none;
+        }
+
+        /* Spacing for user avatar (now always on the right of the bubble within its block) */
+        .user-message-outer .avatar {
+            margin-left: 1rem; /* Space between user bubble and user avatar */
+            margin-right: 0; /* Ensure no extra margin */
+        }
+
+        /* Spacing for bot avatar (always on the left of the bubble within its block) */
+        .bot-message-outer .avatar {
+            margin-right: 1rem; /* Space between bot avatar and bot bubble */
+            margin-left: 0;
+        }
+
+        /* Message Bubble Styling */
+        .message-bubble {
+            max-width: calc(100% - 70px); /* Adjusted max-width to account for avatar + gap */
+            padding: 0.8rem 1.2rem;
+            border-radius: 1.2rem; /* Rounded message bubbles */
+            line-height: 1.4;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* Subtle shadow for bubbles */
+            word-wrap: break-word; /* Ensure long words break */
+            text-align: left;
+            color: #333;
+            border: none;
+        }
+
+        /* User message bubble color (light blue) */
+        .user-message-outer .message-bubble {
+            background-color: #007292;
+            color: white; /* Light blue for user messages */
+            border-bottom-right-radius: 0.3rem; /* Sharpen one corner for speech bubble effect */
+        }
+
+        /* Bot message bubble color (light gray) */
+        .bot-message-outer .message-bubble {
+            background-color: #ffffff; /* Light gray for bot messages */
+            border-bottom-left-radius: 0.3rem; /* Sharpen one corner for speech bubble effect */
+        }
+
+        /* Chat Form Styling */
+        #chat-form {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            width: 100%;
+            align-items: center; /* Ensure consistent vertical alignment of input and button */
+        }
+
+        #user-input {
+            flex-grow: 1; /* Allows input to take available space */
+            padding: 0.8rem 1.2rem;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 9999px; /* Fully rounded input */
+            font-size: 1rem;
+            outline: none;
+            color: #333;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        #user-input::placeholder {
+            color: #888;
+        }
+        #user-input:focus {
+            border-color: #1eade6;
+            box-shadow: 0 0 0 3px rgba(30, 173, 230, 0.2);
+        }
+
+        #chat-form button[type="submit"] {
+            background: linear-gradient(45deg, #1eade6, #1a96c9);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 9999px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            box-shadow: 0 4px 10px rgba(30, 173, 230, 0.3);
+            transition: all 0.3s ease-in-out;
+            flex-shrink: 0; /* Prevent button from shrinking */
+        }
+        #chat-form button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(30, 173, 230, 0.4);
+            background: linear-gradient(45deg, #1a96c9, #1eade6);
+        }
+        #chat-form button[type="submit"]:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(30, 173, 230, 0.2);
+        }
+
+        /* Notepad Styling */
+        h3 {
+            font-size: 1.8rem;
+            color: #1eade6;
+            margin-top: 2rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            text-align: left;
+            text-shadow: none;
+        }
+        #notepad {
+            width: 100%;
+            min-height: 150px; /* Min height for notepad */
+            padding: 1rem;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 1rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            outline: none;
+            resize: vertical; /* Allow vertical resizing */
+            box-sizing: border-box; /* Include padding in width calculation */
+            margin-bottom: 1rem;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+            color: #333;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        #notepad::placeholder {
+            color: #888;
+        }
+        #notepad:focus {
+            border-color: #1eade6;
+            box-shadow: 0 0 0 3px rgba(30, 173, 230, 0.2);
+        }
+
+        .notepad-button {
+            background: linear-gradient(45deg, #1eade6, #1a96c9);
+            color: white;
+            padding: 0.8rem 1.8rem;
+            border: none;
+            border-radius: 9999px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            box-shadow: 0 4px 10px rgba(30, 173, 230, 0.3);
+            transition: all 0.3s ease-in-out;
+            margin-top: 1rem;
+        }
+        .notepad-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(30, 173, 230, 0.4);
+            background: linear-gradient(45deg, #1a96c9, #1eade6);
+        }
+        .notepad-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(30, 173, 230, 0.2);
+        }
+
+
+        /* Modal for save notes */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            color: #333;
+            padding: 25px; border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center; font-family: 'Inter', sans-serif;
+            max-width: 350px; width: 90%;
+            border: none;
+        }
+        .modal-content p {
+            font-size: 1.1rem; color: #333; margin-bottom: 20px;
+        }
+        .modal-content button {
+            background-color: #1eade6;
+            color: white;
+            padding: 10px 20px; border: none;
+            border-radius: 25px; cursor: pointer; font-size: 1rem; font-weight: 600;
+            transition: background-color 0.3s ease;
+            box-shadow: none;
+        }
+        .modal-content button:hover {
+            background-color: #1a96c9;
+            box-shadow: none;
+        }
+        .modal-content .error-button {
+            background-color: #e62e6e;
+            box-shadow: none;
+        }
+        .modal-content .error-button:hover {
+            background-color: #cc2960;
+            box-shadow: none;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 1600px) {
+            body {
+                padding: 1rem;
+            }
+            .container {
+                padding: 1.5rem;
+                border-radius: 1rem;
+                max-width: 1600px;
+                width: 95%;
+            }
+            h2 {
+                font-size: 2rem;
+                margin-bottom: 1.5rem;
+            }
+            .back-button {
+                top: 1rem; /* Adjusted for smaller padding */
+                left: 1rem; /* Adjusted for smaller padding */
+                font-size: 0.9rem;
+            }
+            .back-button i {
+                font-size: 1rem;
+            }
+            .chat-window {
+                height: 300px;
+                padding: 0.8rem;
+            }
+            #chat-form {
+                flex-direction: column; /* Stack input and button vertically on mobile */
+                gap: 0.8rem;
+            }
+            #user-input {
+                width: 100%; /* Input takes full width */
+                padding: 0.7rem 1rem;
+                font-size: 0.95rem;
+            }
+            #chat-form button[type="submit"] {
+                width: 100%; /* Button takes full width */
+                padding: 0.7rem 1.2rem;
+                font-size: 0.95rem;
+            }
+            .message-bubble {
+                max-width: calc(100% - 50px);
+                padding: 0.7rem 1rem;
+                border-radius: 0.8rem;
+            }
+            .avatar {
+                width: 35px;
+                height: 35px;
+            }
+            /* Adjust margins for mobile avatars */
+            .user-message-outer .avatar {
+                margin-left: 0.8rem; /* Space between user bubble and user avatar */
+                margin-right: 0;
+            }
+            .bot-message-outer .avatar {
+                margin-right: 0.8rem;
+                margin-left: 0;
+            }
+            h3 {
+                font-size: 1.5rem;
+                margin-top: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            #notepad {
+                min-height: 120px;
+                padding: 0.8rem;
+                font-size: 0.95rem;
+            }
+            .notepad-button {
+                padding: 0.7rem 1.5rem;
+                font-size: 0.95rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Back Button - NOW OUTSIDE THE CONTAINER -->
+    <a href="/options" class="back-button">
+        <i class="fas fa-arrow-left"></i> Back to Options
+    </a>
+
+    <div class="container">
+        <h2>EduTutor Chatbot</h2>
+
+        <div id="chat-window" class="chat-window">
+            <!-- Chat messages will appear here -->
+        </div>
+
+        <form id="chat-form">
+            <input type="text" id="user-input" placeholder="Ask me anything..." required />
+            <button type="submit">Send</button>
+        </form>
+
+        <h3>Notes</h3>
+        <textarea id="notepad" rows="10" placeholder="Jot down important points here..."></textarea><br />
+        <button onclick="saveNotes()" class="notepad-button">Save Notes</button>
+    </div>
+
+    <script>
+        const chatWindow = document.getElementById('chat-window');
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+        const notepad = document.getElementById('notepad');
+        notepad.value = ''; // Initialize notepad as empty
+        // Sample avatar URLs
+        const userAvatar = '/static/images/user.png'; // Placeholder for User - App color
+        const botAvatar = '/static/images/bot.png'; // Placeholder for Bot - Dark gray
+
+        // Chat history to send to LLM for context
+        let chatHistory = [];
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // Append user message
+            appendMessage('user', message);
+            chatHistory.push({ role: "user", parts: [{ text: message }] }); // Add to chat history
+            userInput.value = '';
+
+            // Simulate bot typing indicator
+            const thinkingMessageDiv = appendMessage('bot', 'EduTutor is thinking...', true);
+
+            try {
+                // Call Gemini API
+                const payload = { contents: chatHistory };
+                const apiKey = "AIzaSyBEmgn35jP1g62GVSfOmhfHBOMki4snsaY";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                // Remove thinking indicator
+                if (thinkingMessageDiv) thinkingMessageDiv.remove();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const botResponse = result.candidates[0].content.parts[0].text;
+                    // Format bot response before appending
+                    appendMessage('bot', botResponse); // formatBotResponse will be called internally
+                    chatHistory.push({ role: "model", parts: [{ text: botResponse }] }); // Add bot response to history
+                } else {
+                    appendMessage('bot', 'No response from the AI. Please try again.');
+                    console.error('Gemini API returned an unexpected structure:', result);
+                }
+
+            } catch (err) {
+                // Remove thinking indicator and show error
+                if (thinkingMessageDiv) thinkingMessageDiv.remove();
+                appendMessage('bot', 'Error contacting the AI. Please check your network or try again.');
+                console.error('Gemini API call failed:', err);
+            }
+        });
+
+        // Function to append messages with sender type and avatar
+        function appendMessage(sender, text, isThinking = false) {
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('message-container');
+            
+            const avatarImg = document.createElement('img');
+            avatarImg.classList.add('avatar');
+            avatarImg.src = sender === 'user' ? userAvatar : botAvatar;
+            avatarImg.alt = sender === 'user' ? 'User Avatar' : 'Bot Avatar';
+
+            const messageBubble = document.createElement('div');
+            messageBubble.classList.add('message-bubble');
+
+            if (isThinking) {
+                messageBubble.innerHTML = `<em>${text}</em>`;
+            } else {
+                // Format bot response for better readability
+                if (sender === 'bot') {
+                    messageBubble.innerHTML = formatBotResponse(text); // Use formatBotResponse for bot text
+                } else {
+                    messageBubble.textContent = text;
+                }
+            }
+
+            // Controlling the order of appending elements directly in JS
+            if (sender === 'user') {
+                messageContainer.classList.add('user-message-outer');
+                messageContainer.appendChild(messageBubble); // Bubble first
+                messageContainer.appendChild(avatarImg);     // Then avatar
+            } else { // sender === 'bot'
+                messageContainer.classList.add('bot-message-outer');
+                messageContainer.appendChild(avatarImg);     // Avatar first
+                messageContainer.appendChild(messageBubble); // Then bubble
+            }
+
+            chatWindow.appendChild(messageContainer);
+            chatWindow.scrollTop = chatWindow.scrollHeight; // Auto-scroll to bottom
+
+            return messageContainer; // Return the message container for potential removal/update
+        }
+
+        // New function to format bot responses
+        function formatBotResponse(text) {
+            const paragraphs = text.split('\n\n').map(para => {
+                let p = para.trim();
+                if (p === '') return '';
+
+                // Simple list item detection within a paragraph
+                if (p.match(/^(-|\*)\s/)) {
+                    const listItems = p.split('\n').map(li => {
+                        const trimmedLi = li.trim();
+                        if (trimmedLi.startsWith('* ') || trimmedLi.startsWith('- ')) {
+                            return '<li>' + trimmedLi.substring(2) + '</li>';
+                        }
+                        return trimmedLi;
+                    }).join('');
+                    return '<ul>' + listItems + '</ul>';
+                }
+
+                return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+            }).join('');
+
+            return paragraphs;
+        }
+
+
+        // Function to save notes to a local file
+        function saveNotes() {
+            const text = notepad.value;
+            const modal = document.createElement('div');
+            modal.classList.add('modal');
+
+            const modalContent = document.createElement('div');
+            modalContent.classList.add('modal-content');
+
+            const messageText = document.createElement('p');
+            const closeButton = document.createElement('button');
+            closeButton.textContent = 'OK';
+            closeButton.onclick = () => modal.remove();
+
+            if (!text.trim()) {
+                messageText.textContent = "Notepad is empty. Please write some notes before saving.";
+                closeButton.classList.add('error-button');
+            } else {
+                const blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'edututor_notes.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+                messageText.textContent = "Notes saved successfully as edututor_notes.txt!";
+            }
+
+            modalContent.appendChild(messageText);
+            modalContent.appendChild(closeButton);
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+        }
+
+        // Custom modal function to replace alerts
+        function showModal(message, isError = false) {
+            const modal = document.createElement('div');
+            modal.classList.add('modal');
+            const modalContent = document.createElement('div');
+            modalContent.classList.add('modal-content');
+            const messageText = document.createElement('p');
+            messageText.textContent = message;
+            const closeButton = document.createElement('button');
+            closeButton.textContent = 'OK';
+            if (isError) {
+                closeButton.classList.add('error-button');
+            }
+            closeButton.onclick = () => modal.remove();
+
+            modalContent.appendChild(messageText);
+            modalContent.appendChild(closeButton);
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+        }
+
+
+        // Load any saved notes from localStorage on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedNotes = localStorage.getItem('edututorChatbotNotes');
+            if (savedNotes) {
+                notepad.value = savedNotes;
+            }
+
+            // Save notes to localStorage whenever notepad content changes
+            notepad.addEventListener('input', () => {
+                localStorage.setItem('edututorChatbotNotes', notepad.value);
+            });
+
+            // Initial bot greeting
+            const initialBotMessage = 'Welcome to EduTutor Chatbot! How can I help you today?';
+            appendMessage('bot', initialBotMessage);
+            chatHistory.push({ role: "model", parts: [{ text: initialBotMessage }] });
+        });
+    </script>
+</body>
+</html>

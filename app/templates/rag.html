@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EduTutor RAG Study Assistant</title>
+    <!-- Google Fonts - Inter for a modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* General Body Styles - Consistent with Chatbot page */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top for longer content */
+            min-height: 100vh; /* Full viewport height */
+            background: linear-gradient(135deg, #f4f4f4 0%, #e0f2f7 100%);
+            color: #333; /* Default text color */
+            overflow-y: auto; /* Allow scrolling if content overflows */
+            position: relative; /* Set body as positioning context for absolute button */
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+
+        /* Back Button Styling - Moved outside container and to the far left */
+        .back-button {
+            position: absolute; /* Position relative to the body */
+            top: 2rem; /* Aligned with body's padding-top */
+            left: 2rem; /* Positioned 2rem from the left edge of the screen */
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            color: #1eade6;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease, transform 0.2s ease;
+            z-index: 10; /* Ensure it's above other elements */
+        }
+        .back-button:hover {
+            color: #1a96c9;
+            transform: translateX(-5px);
+        }
+        .back-button i {
+            font-size: 1.2rem;
+        }
+
+        /* Container Styling - Consistent with Chatbot page */
+        .container {
+            background-color: #ffffff; /* White background for the main card */
+            border-radius: 1.5rem; /* More pronounced rounded corners */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Soft, larger shadow */
+            padding: 2.5rem; /* Increased padding */
+            text-align: center;
+            width: 90%;
+            max-width: 1400px;
+            box-sizing: border-box; /* Include padding in width calculation */
+            animation: fadeInScale 0.8s ease-out forwards; /* Entry animation */
+            margin-bottom: 2rem; /* Space below container */
+            margin-left: auto; /* Center the container */
+            margin-right: auto; /* Center the container */
+        }
+
+        /* Entry Animation for the container */
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        h2 {
+            font-size: 2.5rem; /* Larger heading */
+            color: #1eade6; /* Main blue color */
+            margin-bottom: 2rem; /* Space below heading */
+            font-weight: 800; /* Extra bold */
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* Chat Window Styling - Consistent with Chatbot page */
+        .chat-window {
+            border: 1px solid #e0e0e0;
+            border-radius: 1rem;
+            padding: 1rem;
+            height: 400px; /* Increased height */
+            overflow-y: auto;
+            background: linear-gradient(to right, #9ae7ff, #24cfff);
+            margin-bottom: 1.5rem;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+            scroll-behavior: smooth;
+            text-align: left; /* Ensure text aligns left within bubbles */
+        }
+
+        /* Scrollbar Styling (Webkit - Chrome, Safari) - Consistent with Chatbot page */
+        .chat-window::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-window::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .chat-window::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .chat-window::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Message Styling - Outer container for alignment - Consistent with Chatbot page */
+        .message-container {
+            display: flex;
+            align-items: flex-start; /* Align avatar and text to top */
+            margin-bottom: 1rem; /* Space between messages */
+            animation: fadeInMessage 0.5s ease-out forwards; /* Animation for new messages */
+            width: 100%; /* Ensure container takes full width to allow alignment */
+        }
+
+        /* Message Entry Animation - Consistent with Chatbot page */
+        @keyframes fadeInMessage {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* User message container: Aligns to the right, bubble first, then avatar */
+        .user-message-outer {
+            justify-content: flex-end; /* Pushes entire message block to the right */
+            flex-direction: row; /* CRITICAL CHANGE: Places message bubble first, then avatar visually */
+        }
+
+        /* Bot message container: Aligns to the left, avatar first, then bubble */
+        .bot-message-outer {
+            justify-content: flex-start; /* Pushes entire message block to the left */
+            flex-direction: row; /* Places avatar first, then bubble VISUALLY */
+        }
+
+        /* Avatar Styling - Consistent with Chatbot page */
+        .avatar {
+            width: 40px; /* Avatar size */
+            height: 40px;
+            border-radius: 50%; /* Circular avatar */
+            object-fit: cover; /* Ensure image covers the area */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0; /* Prevent avatar from shrinking */
+            border: none;
+        }
+
+        /* Spacing for user avatar (on the right of the bubble) */
+        .user-message-outer .avatar {
+            margin-left: 1rem; /* Space between user bubble and user avatar */
+            margin-right: 0; /* Ensure no extra margin */
+        }
+
+        /* Spacing for bot avatar (on the left of the bubble) - Consistent with Chatbot page */
+        .bot-message-outer .avatar {
+            margin-right: 1rem; /* Space between bot avatar and bot bubble */
+            margin-left: 0;
+        }
+
+        /* Message Bubble Styling - Consistent with Chatbot page */
+        .message-bubble {
+            max-width: calc(100% - 70px); /* Adjusted max-width to account for avatar + gap */
+            padding: 0.8rem 1.2rem;
+            border-radius: 1.2rem; /* Rounded message bubbles */
+            line-height: 1.4;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* Subtle shadow for bubbles */
+            word-wrap: break-word; /* Ensure long words break */
+            text-align: left;
+            color: #333;
+            border: none;
+        }
+
+        /* User message bubble color (light blue) - Consistent with Chatbot page */
+        .user-message-outer .message-bubble {
+            background-color: #007292;
+            color: white;
+            border-bottom-right-radius: 0.3rem; /* Sharpen one corner for speech bubble effect */
+        }
+
+        /* Bot message bubble color (light gray) - Consistent with Chatbot page */
+        .bot-message-outer .message-bubble {
+            background-color: #ffffff;
+            border-bottom-left-radius: 0.3rem; /* Sharpen one corner for speech bubble effect */
+        }
+
+        /* Input Form Styling (for URL and Chat) - Consistent with Chatbot page */
+        .input-form {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem; /* Adjusted for spacing */
+            width: 100%;
+            align-items: center;
+        }
+
+        .input-form input[type="text"] {
+            flex-grow: 1;
+            padding: 0.8rem 1.2rem;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 9999px;
+            font-size: 1rem;
+            outline: none;
+            color: #333;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .input-form input[type="text"]::placeholder {
+            color: #888;
+        }
+        .input-form input[type="text"]:focus {
+            border-color: #1eade6;
+            box-shadow: 0 0 0 3px rgba(30, 173, 230, 0.2);
+        }
+
+        .input-form button {
+            background: linear-gradient(45deg, #1eade6, #1a96c9);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 9999px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            box-shadow: 0 4px 10px rgba(30, 173, 230, 0.3);
+            transition: all 0.3s ease-in-out;
+            flex-shrink: 0;
+        }
+        .input-form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(30, 173, 230, 0.4);
+            background: linear-gradient(45deg, #1a96c9, #1eade6);
+        }
+        .input-form button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(30, 173, 230, 0.2);
+        }
+        
+        /* Notepad Styling - Consistent with Chatbot page */
+        h3 {
+            font-size: 1.8rem;
+            color: #1eade6;
+            margin-top: 2rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            text-align: left;
+            text-shadow: none;
+        }
+        #notepad {
+            width: 100%;
+            min-height: 150px;
+            padding: 1rem;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 1rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            outline: none;
+            resize: vertical;
+            box-sizing: border-box;
+            margin-bottom: 1rem;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+            color: #333;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        #notepad::placeholder {
+            color: #888;
+        }
+        #notepad:focus {
+            border-color: #1eade6;
+            box-shadow: 0 0 0 3px rgba(30, 173, 230, 0.2);
+        }
+
+        .notepad-button {
+            background: linear-gradient(45deg, #1eade6, #1a96c9);
+            color: white;
+            padding: 0.8rem 1.8rem;
+            border: none;
+            border-radius: 9999px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            box-shadow: 0 4px 10px rgba(30, 173, 230, 0.3);
+            transition: all 0.3s ease-in-out;
+            margin-top: 1rem;
+        }
+        .notepad-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(30, 173, 230, 0.4);
+            background: linear-gradient(45deg, #1a96c9, #1eade6);
+        }
+        .notepad-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(30, 173, 230, 0.2);
+        }
+
+
+        /* Modal for save notes - Consistent with Chatbot page */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            color: #333;
+            padding: 25px; border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center; font-family: 'Inter', sans-serif;
+            max-width: 350px; width: 90%;
+            border: none;
+        }
+        .modal-content p {
+            font-size: 1.1rem; color: #333; margin-bottom: 20px;
+        }
+        .modal-content button {
+            background-color: #1eade6;
+            color: white;
+            padding: 10px 20px; border: none;
+            border-radius: 25px; cursor: pointer; font-size: 1rem; font-weight: 600;
+            transition: background-color 0.3s ease;
+            box-shadow: none;
+        }
+        .modal-content button:hover {
+            background-color: #1a96c9;
+            box-shadow: none;
+        }
+        .modal-content .error-button {
+            background-color: #e62e6e;
+            box-shadow: none;
+        }
+        .modal-content .error-button:hover {
+            background-color: #cc2960;
+            box-shadow: none;
+        }
+
+        /* Responsive Adjustments - Consistent with Chatbot page */
+        @media (max-width: 1600px) {
+            body {
+                padding: 1rem;
+            }
+            .container {
+                padding: 1.5rem;
+                border-radius: 1rem;
+                max-width: 1600px;
+                width: 95%;
+            }
+            h2 {
+                font-size: 2rem;
+                margin-bottom: 1.5rem;
+            }
+            .back-button {
+                top: 1rem; /* Adjusted for smaller padding */
+                left: 1rem; /* Adjusted for smaller padding */
+                font-size: 0.9rem;
+            }
+            .back-button i {
+                font-size: 1rem;
+            }
+            .chat-window {
+                height: 300px;
+                padding: 0.8rem;
+            }
+            .input-form {
+                flex-direction: column; /* Stack input and button vertically on mobile */
+                gap: 0.8rem;
+            }
+            .input-form input[type="text"] {
+                width: 100%; /* Input takes full width */
+                padding: 0.7rem 1rem;
+                font-size: 0.95rem;
+            }
+            .input-form button {
+                width: 100%; /* Button takes full width */
+                padding: 0.7rem 1.2rem;
+                font-size: 0.95rem;
+            }
+            .message-bubble {
+                max-width: calc(100% - 50px);
+                padding: 0.7rem 1rem;
+                border-radius: 0.8rem;
+            }
+            .avatar {
+                width: 35px;
+                height: 35px;
+            }
+            /* Adjust margins for mobile avatars */
+            .user-message-outer .avatar {
+                margin-left: 0.8rem;
+                margin-right: 0;
+            }
+            .bot-message-outer .avatar {
+                margin-right: 0.8rem;
+                margin-left: 0;
+            }
+            h3 {
+                font-size: 1.5rem;
+                margin-top: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            #notepad {
+                min-height: 120px;
+                padding: 0.8rem;
+                font-size: 0.95rem;
+            }
+            .notepad-button {
+                padding: 0.7rem 1.5rem;
+                font-size: 0.95rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Back Button - NOW OUTSIDE THE CONTAINER -->
+    <a href="/options" class="back-button">
+        <i class="fas fa-arrow-left"></i> Back to Options
+    </a>
+
+    <div class="container">
+        <h2>EduTutor RAG Study Assistant</h2>
+
+        <!-- URL Input and Extract Button -->
+        <div class="input-form">
+            <input type="text" id="url-input" placeholder="Paste URL (e.g., https://example.com/article)" required />
+            <button onclick="extractContent()">Extract Content</button>
+        </div>
+
+        <div id="chat-window" class="chat-window">
+            <!-- Chat messages and RAG answers will appear here -->
+        </div>
+
+        <!-- Question Input and Ask Button -->
+        <div class="input-form">
+            <input type="text" id="question-input" placeholder="Ask a question about the content..." />
+            <button onclick="askQuestion()">Ask</button>
+        </div>
+
+        <h3>Notes</h3>
+        <textarea id="notepad" rows="10" placeholder="Jot down important points here..."></textarea><br />
+        <button onclick="saveNotes()" class="notepad-button">Save Notes</button>
+    </div>
+
+    <script>
+        const chatWindow = document.getElementById('chat-window');
+        const urlInput = document.getElementById('url-input');
+        const questionInput = document.getElementById('question-input');
+        const notepad = document.getElementById('notepad');
+
+        // Sample avatar URLs
+        const userAvatar = '/static/images/user.png'; // Placeholder for User - App color
+        const botAvatar = '/static/images/bot.png'; // Placeholder for Bot - Dark gray
+
+        let extractedContext = ''; // This will store the content extracted from the URL
+        let chatHistory = []; // For Gemini API conversation history
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initial bot greeting for RAG
+            const initialBotMessage = 'Hello! Paste a URL and click "Extract Content" to begin your RAG session.';
+            appendMessage('bot', initialBotMessage);
+            chatHistory.push({ role: "model", parts: [{ text: initialBotMessage }] });
+
+            // Load any saved notes from localStorage on page load
+            const savedNotes = localStorage.getItem('edututorRagNotes');
+            if (savedNotes) {
+                notepad.value = savedNotes;
+            }
+            // Save notes to localStorage whenever notepad content changes
+            notepad.addEventListener('input', () => {
+                localStorage.setItem('edututorRagNotes', notepad.value);
+            });
+        });
+
+        async function extractContent() {
+            const url = urlInput.value.trim();
+            if (!url) {
+                showModal('Please enter a valid URL to extract content from.');
+                return;
+            }
+
+            // Show user's action in chat
+            appendMessage('user', `Attempting to extract content from: ${url}`);
+            chatHistory.push({ role: "user", parts: [{ text: `Attempting to extract content from: ${url}` }] });
+
+            // Show thinking message for bot
+            const thinkingMessageDiv = appendMessage('bot', 'EduTutor is analyzing the URL and extracting content...', true);
+
+            try {
+                // Fetch call to your RAG backend for content extraction
+                // Note: The actual content extraction logic is handled by your backend.
+                // This client-side code simulates the interaction.
+                const formData = new FormData();
+                formData.append('url', url);
+                const res = await fetch('/rag/api/extract', {
+                    method: 'POST',
+                    body: formData // Assuming your backend expects FormData
+                });
+                const data = await res.json();
+
+                if (thinkingMessageDiv) thinkingMessageDiv.remove();
+
+                if (data.content && data.content.length > 0) {
+                    extractedContext = data.content;
+                    appendMessage('bot', `Content successfully extracted. You can now ask questions about the URL content.`);
+                    chatHistory.push({ role: "model", parts: [{ text: `Content successfully extracted.` }] });
+                } else if (data.error) {
+                    appendMessage('bot', `Error extracting content: ${data.error}. Please check the URL and try again.`);
+                    console.error('Extraction error:', data.error);
+                } else {
+                    appendMessage('bot', 'Could not extract any meaningful content from the URL. It might be empty, protected, or an invalid format.');
+                }
+            } catch (err) {
+                if (thinkingMessageDiv) thinkingMessageDiv.remove();
+                appendMessage('bot', 'Failed to connect to the extraction service. Please check your network and ensure the backend is running.');
+                console.error('Extract content API error:', err);
+            }
+        }
+
+        async function askQuestion() {
+            const question = questionInput.value.trim();
+            if (!question) {
+                showModal('Please enter a question to ask.');
+                return;
+            }
+            if (!extractedContext) {
+                showModal('Please extract content from a URL first before asking a question.');
+                return;
+            }
+
+            appendMessage('user', question);
+            chatHistory.push({ role: "user", parts: [{ text: question }] });
+            questionInput.value = '';
+
+            const thinkingMessageDiv = appendMessage('bot', 'EduTutor is thinking...', true);
+
+            try {
+                // Call Gemini API for RAG
+                // Construct a prompt that guides the LLM to use the extracted context.
+                const ragPrompt = `Using ONLY the following content, answer the question: "${question}"\n\nContent: "${extractedContext}"\n\nIf the answer is not directly available in the provided content, state that you cannot find it within the given text.`;
+
+                const finalPayload = {
+                    contents: [...chatHistory.slice(-5), { role: "user", parts: [{ text: ragPrompt }] }] // Send last 5 turns + current RAG prompt
+                };
+
+                const apiKey = "AIzaSyBEmgn35jP1g62GVSfOmhfHBOMki4snsaY";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(finalPayload)
+                });
+
+                const result = await response.json();
+
+                if (thinkingMessageDiv) thinkingMessageDiv.remove();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const botResponse = result.candidates[0].content.parts[0].text;
+                    appendMessage('bot', botResponse);
+                    chatHistory.push({ role: "model", parts: [{ text: botResponse }] });
+                } else {
+                    appendMessage('bot', 'No answer from the AI based on the extracted content. Please try rephrasing your question or extracting new content.');
+                    console.error('Gemini API returned an unexpected structure:', result);
+                }
+
+            } catch (err) {
+                if (thinkingMessageDiv) thinkingMessageDiv.remove();
+                appendMessage('bot', 'Error contacting the AI service. Please check your network or try again.');
+                console.error('Gemini API call failed:', err);
+            }
+        }
+
+        // Function to append messages with sender type and avatar - Reused from chatbot
+        function appendMessage(sender, text, isThinking = false) {
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('message-container');
+            
+            const avatarImg = document.createElement('img');
+            avatarImg.classList.add('avatar');
+            avatarImg.src = sender === 'user' ? userAvatar : botAvatar;
+            avatarImg.alt = sender === 'user' ? 'User Avatar' : 'Bot Avatar';
+
+            const messageBubble = document.createElement('div');
+            messageBubble.classList.add('message-bubble');
+
+            if (isThinking) {
+                messageBubble.innerHTML = `<em>${text}</em>`;
+            } else {
+                // Format bot response for better readability
+                if (sender === 'bot') {
+                    messageBubble.innerHTML = formatBotResponse(text);
+                } else {
+                    messageBubble.textContent = text;
+                }
+            }
+
+            // Controlling the order of appending elements directly in JS
+            // For user: Append bubble first, then avatar
+            // For bot: Append avatar first, then bubble
+            if (sender === 'user') {
+                messageContainer.classList.add('user-message-outer');
+                messageContainer.appendChild(messageBubble); // Bubble first in DOM
+                messageContainer.appendChild(avatarImg);     // Then avatar in DOM
+            } else { // sender === 'bot'
+                messageContainer.classList.add('bot-message-outer');
+                messageContainer.appendChild(avatarImg);     // Avatar first in DOM
+                messageContainer.appendChild(messageBubble); // Then bubble in DOM
+            }
+
+            chatWindow.appendChild(messageContainer);
+            chatWindow.scrollTop = chatWindow.scrollHeight; // Auto-scroll to bottom
+
+            return messageContainer;
+        }
+
+        // Function to format bot responses - Reused from chatbot
+        function formatBotResponse(text) {
+            const paragraphs = text.split('\n\n').map(para => {
+                let p = para.trim();
+                if (p === '') return '';
+
+                // Simple list item detection within a paragraph
+                if (p.match(/^(-|\*)\s/)) {
+                    const listItems = p.split('\n').map(li => {
+                        const trimmedLi = li.trim();
+                        if (trimmedLi.startsWith('* ') || trimmedLi.startsWith('- ')) {
+                            return '<li>' + trimmedLi.substring(2) + '</li>';
+                        }
+                        return trimmedLi;
+                    }).join('');
+                    return '<ul>' + listItems + '</ul>';
+                }
+
+                return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+            }).join('');
+
+            return paragraphs;
+        }
+
+        // Function to save notes to a local file (reused modal from chatbot)
+        function saveNotes() {
+            const text = notepad.value;
+            const modal = document.createElement('div');
+            modal.classList.add('modal');
+
+            const modalContent = document.createElement('div');
+            modalContent.classList.add('modal-content');
+
+            const messageText = document.createElement('p');
+            const closeButton = document.createElement('button');
+            closeButton.textContent = 'OK';
+            closeButton.onclick = () => modal.remove();
+
+            if (!text.trim()) {
+                messageText.textContent = "Notepad is empty. Please write some notes before saving.";
+                closeButton.classList.add('error-button');
+            } else {
+                const blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'edututor_rag_notes.txt'; // Changed filename for RAG notes
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+                messageText.textContent = "Notes saved successfully as edututor_rag_notes.txt!";
+            }
+
+            modalContent.appendChild(messageText);
+            modalContent.appendChild(closeButton);
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+        }
+
+        // Custom modal function to replace alerts - Reused from chatbot
+        function showModal(message, isError = false) {
+            const modal = document.createElement('div');
+            modal.classList.add('modal');
+            const modalContent = document.createElement('div');
+            modalContent.classList.add('modal-content');
+            const messageText = document.createElement('p');
+            messageText.textContent = message;
+            const closeButton = document.createElement('button');
+            closeButton.textContent = 'OK';
+            if (isError) {
+                closeButton.classList.add('error-button');
+            }
+            closeButton.onclick = () => modal.remove();
+
+            modalContent.appendChild(messageText);
+            modalContent.appendChild(closeButton);
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+        }
+
+    </script>
+</body>
+</html>

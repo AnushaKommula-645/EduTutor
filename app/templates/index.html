@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduTutor - AI-Powered Personalized Learning Assistant</title>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* General Body Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f8f8; /* Light gray background */
+            color: #333; /* Default text color */
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Container for content */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Utility Classes for Colors */
+        .text-blue-main {
+            color: #1eade6;
+        }
+        .bg-blue-main {
+            background-color: #1eade6;
+        }
+        .hover-bg-blue-dark:hover {
+            background-color: #1a96c9; /* Darker blue for hover */
+        }
+        .text-gray-dark {
+            color: #333;
+        }
+        .text-gray-light {
+            color: #666;
+        }
+        .bg-gray-light {
+            background-color: #f0f0f0;
+        }
+
+        /* Gradient Backgrounds */
+        .gradient-hero {
+            background: linear-gradient(135deg, rgba(30, 173, 230, 0.1), rgba(30, 173, 230, 0.05), rgba(248, 248, 248, 0.8));
+        }
+        .gradient-section {
+            background: linear-gradient(135deg, rgba(30, 173, 230, 0.03), rgba(30, 173, 230, 0.01));
+        }
+
+        /* Buttons */
+        .btn-primary {
+            display: inline-block;
+            background-color: #1eade6;
+            color: white;
+            padding: 0.8rem 2.2rem;
+            border-radius: 9999px; /* Fully rounded */
+            font-weight: 600;
+            text-decoration: none;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 10px rgba(30, 173, 230, 0.3);
+        }
+        .btn-primary:hover {
+            background-color: #1a96c9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(30, 173, 230, 0.4);
+        }
+        .btn-secondary {
+            display: inline-block;
+            background-color: #e2e8f0; /* Light gray */
+            color: #1eade6; /* Custom blue */
+            padding: 0.8rem 2.2rem;
+            border-radius: 9999px; /* Fully rounded */
+            font-weight: 600;
+            text-decoration: none;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .btn-secondary:hover {
+            background-color: #cbd5e1; /* Darker gray on hover */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Card Styles */
+        .card {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .card:hover {
+            transform: translateY(-8px);
+            border: 2px solid #1eade6; /* Light gray border on hover */
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+        }
+        .card h3 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 0.75rem;
+        }
+        .card p {
+            color: #555;
+            margin-bottom: 1.5rem;
+            flex-grow: 1; /* Allows paragraph to take available space */
+        }
+        .card .icon {
+            font-size: 3rem;
+            color: #1eade6;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Header/Navbar */
+        header {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.458);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom-left-radius: 1.5rem;
+            border-bottom-right-radius: 1.5rem;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            display: flex; /* Use flexbox to align logo image and text */
+            align-items: center; /* Vertically center them */
+            gap: 0.75rem; /* Space between logo image and text */
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: #1eade6;
+            text-decoration: none;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.75rem;
+            transition: color 0.3s ease;
+        }
+        .logo:hover {
+            color: #1a96c9;
+        }
+        /* Style for the logo image */
+        .logo img {
+            height: 40px; /* Adjust height as needed */
+            width: auto; /* Maintain aspect ratio */
+            border-radius: 0.5rem; /* Slightly rounded corners for the logo itself */
+        }
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        .nav-links a {
+            color: #555;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            transition: color 0.3s ease, background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            color: #1eade6;
+            background-color: #f0f0f0;
+        }
+        .mobile-menu-button {
+            display: none; /* Hidden on desktop */
+            font-size: 2rem;
+            color: #555;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.3s ease;
+        }
+        .mobile-menu-button:hover {
+            background-color: #f0f0f0;
+        }
+        .mobile-menu {
+            display: none; /* Hidden by default */
+            background-color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            margin-top: 1rem;
+            border-radius: 1rem;
+            padding: 0.5rem;
+            margin-left: 1rem;
+            margin-right: 1rem;
+        }
+        .mobile-menu a {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            border-radius: 0.75rem;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .mobile-menu a:hover {
+            background-color: #f0f0f0;
+            color: #1eade6;
+        }
+
+        /* Hero Section */
+        
+        .hero-section {
+            padding: 8rem 0;
+            text-align: center;
+            overflow: hidden;
+            position: relative;
+            background: linear-gradient(#ffffff, #8dc7de);
+            border-bottom-left-radius: 3rem;
+            border-bottom-right-radius: 3rem;
+        }
+        .hero-section h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            color: #222;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.05);
+        }
+        .hero-section h1 .highlight {
+            color: #1eade6;
+        }
+        .hero-section .subtitle {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #444;
+        }
+        .hero-section .description {
+            font-size: 1.15rem;
+            color: #666;
+            margin-bottom: 2.5rem;
+            max-width: 50rem;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Features Section */
+        .features-section {
+            padding: 6rem 0;
+            text-align: center;
+        }
+        .features-section h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #222;
+            margin-bottom: 1rem;
+        }
+        .features-section .subtitle {
+            font-size: 1.25rem;
+            color: #666;
+            margin-bottom: 4rem;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2.5rem;
+        }
+
+        /* How It Works Section */
+        .how-it-works-section {
+            padding: 6rem 0;
+            text-align: center;
+            background-color: #e5f3f9;
+            border-radius: 1rem; /* Rounded corners for the section itself */
+            margin: 4rem 0; /* Margin to separate from other sections */
+        }
+        .how-it-works-section h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #222;
+            margin-bottom: 1rem;
+        }
+        .how-it-works-section .subtitle {
+            font-size: 1.25rem;
+            color: #666;
+            margin-bottom: 4rem;
+        }
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            text-align: left;
+        }
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .step-item:hover {
+            transform: translateY(-5px);
+            border: 2px solid #1eade6;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        .step-number {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #1eade6;
+            line-height: 1;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+        .step-item h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 0.75rem;
+        }
+        .step-item p {
+            color: #555;
+        }
+        .tech-integration {
+            max-width: 800px;
+            margin: 4rem auto 0 auto;
+            font-size: 1.1rem;
+            color: #444;
+            line-height: 1.8;
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            text-align: left;
+        }
+        .key-benefits {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-top: 2.5rem;
+        }
+        .benefit-item {
+            background-color: #edf2f7; /* Light gray */
+            padding: 1.5rem;
+            border-radius: 1rem;
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        /* Stats & Testimonial Section */
+        .stats-testimonial-section {
+            padding: 6rem 0;
+            background-color: #333; /* Dark background */
+            color: white;
+            text-align: center;
+            border-radius: 1rem;
+            margin: 4rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+        .stat-item h3 {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #1eade6;
+            line-height: 1.2;
+        }
+        .stat-item p {
+            font-size: 1.1rem;
+            color: #ccc;
+        }
+        .testimonial-card {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            max-width: 700px;
+            margin: 0 auto;
+            font-size: 1.3rem;
+            font-style: italic;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            color: white;
+        }
+        .testimonial-card::before {
+            content: '“';
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            font-size: 5rem;
+            color: rgba(30, 173, 230, 0.5);
+            line-height: 1;
+            z-index: 0;
+        }
+        .testimonial-card::after {
+            content: '”';
+            position: absolute;
+            bottom: 0.5rem;
+            right: 1rem;
+            font-size: 5rem;
+            color: rgba(30, 173, 230, 0.5);
+            line-height: 1;
+            z-index: 0;
+        }
+        .testimonial-card p {
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+        .testimonial-card span {
+            display: block;
+            font-size: 1rem;
+            font-style: normal;
+            font-weight: 600;
+            color: #1eade6;
+            margin-top: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 6rem 0;
+            text-align: center;
+            background-color: #e5f3f9; /* Very light blue */
+            border-radius: 3rem;
+            margin: 4rem 0;
+        }
+        .cta-section h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #222;
+            margin-bottom: 1rem;
+        }
+        .cta-section p {
+            font-size: 1.25rem;
+            color: #666;
+            margin-bottom: 2.5rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap; /* Allows buttons to wrap on smaller screens */
+        }
+
+        /* Footer */
+        footer {
+            background-color: #222; /* Darker background for footer */
+            color: white;
+            padding: 4rem 0;
+            border-top-left-radius: 1rem;
+            border-top-right-radius: 1rem;
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        .footer-col h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #1eade6;
+        }
+        .footer-col ul {
+            list-style: none;
+            padding: 0;
+        }
+        .footer-col ul li {
+            margin-bottom: 0.75rem;
+        }
+        .footer-col ul li a {
+            color: #ccc;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .footer-col ul li a:hover {
+            color: #1eade6;
+        }
+        .footer-contact p, .footer-contact a {
+            color: #ccc;
+            margin-bottom: 0.5rem;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .footer-contact a:hover {
+            color: #1eade6;
+        }
+        .social-icons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .social-icons a {
+            color: white;
+            font-size: 1.5rem;
+            transition: color 0.3s ease;
+        }
+        .social-icons a:hover {
+            color: #1eade6;
+        }
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        .footer-bottom .heart-icon {
+            color: #e62e6e; /* A nice red for the heart */
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none; /* Hide desktop nav links on mobile */
+            }
+            .mobile-menu-button {
+                display: block; /* Show hamburger on mobile */
+            }
+            .hero-section {
+                padding: 6rem 0;
+            }
+            .hero-section h1 {
+                font-size: 2.5rem;
+            }
+            .hero-section .subtitle {
+                font-size: 1.5rem;
+            }
+            .features-grid, .steps-grid, .stats-grid, .footer-grid, .cta-buttons {
+                grid-template-columns: 1fr; /* Stack columns on small screens */
+            }
+            .features-section, .how-it-works-section, .stats-testimonial-section, .cta-section {
+                padding: 4rem 0;
+                margin: 2rem 0;
+                border-radius: 1.5rem; /* Smaller radius on mobile */
+            }
+            .card, .step-item, .tech-integration, .testimonial-card, .benefit-item {
+                border-radius: 1rem; /* Smaller radius on mobile */
+                padding: 1.5rem;
+            }
+            .testimonial-card::before, .testimonial-card::after {
+                font-size: 3rem;
+            }
+            .testimonial-card {
+                font-size: 1rem;
+            }
+            .stat-item h3 {
+                font-size: 2.5rem;
+            }
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            .btn-primary, .btn-secondary {
+                width: 80%; /* Make buttons wider on small screens */
+                max-width: 300px;
+                text-align: center;
+            }
+            /* Adjust logo size on mobile if needed */
+            .logo img {
+                height: 30px; /* Smaller logo on mobile */
+            }
+            .logo {
+                font-size: 1.8rem; /* Smaller text size for logo on mobile */
+            }
+        }
+        .cta-section .container img {
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header / Navbar -->
+    <header>
+        <nav class="navbar container">
+            <!-- Logo with Image and Text -->
+            <a href="#hero" class="logo">
+                <img src="/static/images/brain.png" alt="EduTutor Logo">
+                EduTutor
+            </a>
+            <!-- Navigation Links (Desktop) -->
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#about">About</a>
+                <a href="#contact">Contact</a>
+            </div>
+            <!-- Mobile Menu Button (Hamburger) -->
+            <button id="mobile-menu-button" class="mobile-menu-button">
+                <i class="fas fa-bars"></i>
+            </button>
+        </nav>
+        <!-- Mobile Menu (Hidden by default) -->
+        <div id="mobile-menu" class="mobile-menu">
+            <a href="#features">Features</a>
+            <a href="#about">About</a>
+            <a href="#contact">Contact</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section id="hero" class="hero-section gradient-hero">
+            <div class="container">
+                <h1>Welcome to <span class="highlight">EduTutor</span></h1>
+                <p class="subtitle">Your AI-Powered Personalized Learning Assistant</p>
+                <p class="description">
+                    Chat with our intelligent tutoring system, explore web content with RAG technology, and take notes that sync across all your devices.
+                </p>
+                <a href="options" class="btn-primary">Get Started</a>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="features-section">
+            <div class="container">
+                <h2>Powerful Learning Tools</h2>
+                <p class="subtitle">Experience the future of education with our cutting-edge AI technologies</p>
+                <div class="features-grid">
+                    <!-- Feature Card 1: AI Chatbot -->
+                    <div class="card">
+                        <i class="fas fa-robot icon"></i>
+                        <h3>AI Chatbot</h3>
+                        <p>Get instant answers to your academic questions with our intelligent tutoring assistant powered by advanced AI.</p>
+                        <a href="#" class="btn-secondary">Learn More</a>
+                    </div>
+                    <!-- Feature Card 2: RAG Technology -->
+                    <div class="card">
+                        <i class="fas fa-search icon"></i>
+                        <h3>RAG Technology</h3>
+                        <p>Input any website URL and ask context-based questions. Our RAG system provides accurate, source-specific answers.</p>
+                        <a href="#" class="btn-secondary">Explore</a>
+                    </div>
+                    <!-- Feature Card 3: Smart Notepad -->
+                    <div class="card">
+                        <i class="fas fa-clipboard icon"></i>
+                        <h3>Smart Notepad</h3>
+                        <p>Take notes during your learning sessions and download them to access on your device anytime.</p>
+                        <a href="#" class="btn-secondary">Take Notes</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section id="about" class="how-it-works-section gradient-section">
+            <div class="container">
+                <h2>How It Works</h2>
+                <p class="subtitle">Simple steps to transform your learning experience</p>
+                <div class="steps-grid">
+                    <!-- Step 1 -->
+                    <div class="step-item">
+                        <span class="step-number">01</span>
+                        <h3>Choose Your Tool</h3>
+                        <p>Select from our AI Chatbot for general questions or RAG module for URL-based queries.</p>
+                    </div>
+                    <!-- Step 2 -->
+                    <div class="step-item">
+                        <span class="step-number">02</span>
+                        <h3>Ask & Learn</h3>
+                        <p>Get instant, accurate answers powered by IBM WatsonX and Google Gemini APIs.</p>
+                    </div>
+                    <!-- Step 3 -->
+                    <div class="step-item">
+                        <span class="step-number">03</span>
+                        <h3>Save & Download</h3>
+                        <p>Take notes in our smart notepad and download them to your devices.</p>
+                    </div>
+                </div>
+        
+            </div>
+        </section>
+
+        <!-- Stats & Testimonial Section -->
+        <section class="stats-testimonial-section">
+            <div class="container">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <h3>10K+</h3>
+                        <p>Students</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3>4.9</h3>
+                        <p>Rating</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3>24/7</h3>
+                        <p>Support</p>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <p>"EduTutor transformed my learning experience!"</p>
+                    <span>Sarah M., Computer Science Student</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Call to Action Section -->
+        <section class="cta-section">
+            <div class="container">
+                <img src="/static/images/brain.png" alt="EduTutor Logo">
+                <h2>Ready to Transform Your Learning?</h2>
+                <p>Join thousands of students who are already experiencing the future of personalized education.</p>
+                <div class="cta-buttons">
+                    <a href="#" class="btn-primary">Get Started Free</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-grid">
+                <!-- EduTutor Info -->
+                <div class="footer-col">
+                    <a href="#hero" class="logo" style="font-size: 1.8rem; margin-bottom: 1rem;">
+                        <img src="/static/images/brain.png" alt="EduTutor Logo">
+                        EduTutor
+                    </a>
+                    <p style="color: #ccc; margin-top: 0.5rem;">Empowering students worldwide with AI-driven personalized learning experiences.</p>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="footer-col">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#about">About</a></li>
+                        <li><a href="#">Pricing</a></li>
+                        <li><a href="#">Support</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contact Info -->
+                <div class="footer-col footer-contact">
+                    <h3>Contact</h3>
+                    <p><a href="mailto:support@edututor.ai">support@edututor.ai</a></p>
+                    <p><a href="tel:+15551234567">+1 (555) 123-4567</a></p>
+                    <p>Available 24/7</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                &copy; 2025 EduTutor. All rights reserved. Built with <span class="heart-icon">&hearts;</span> for learners everywhere.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // JavaScript for Mobile Menu Toggle
+        document.addEventListener('DOMContentLoaded', () => {
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.style.display = mobileMenu.style.display === 'block' ? 'none' : 'block';
+            });
+
+            // Close mobile menu when a link is clicked
+            mobileMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.style.display = 'none';
+                });
+            });
+
+            // Close mobile menu if clicked outside
+            document.addEventListener('click', (event) => {
+                if (!mobileMenu.contains(event.target) && !mobileMenuButton.contains(event.target)) {
+                    mobileMenu.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
