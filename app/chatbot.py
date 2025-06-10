@@ -26,12 +26,24 @@ def truncate_prompt(prompt, max_words=1500):
     if len(words) > max_words:
         return ' '.join(words[-max_words:])
     return prompt
+# def is_educational_question(user_input: str) -> bool:
+#     # Simple keyword check — can be replaced with NLP classification
+#     keywords = ["study", "homework", "exam", "math", "science", "history", "biology", "notes", "assignment", "class", "school"]
+#     return any(kw.lower() in user_input.lower() for kw in keywords)
 
 def ask_chatbot(user_input: str) -> str:
-    user_prompt = f"""You are a helpful AI assistant. Answer the user's question in detail, providing clear and informative explanations.
+    # if not is_educational_question(user_input):
+    #     return "I'm here to help with your studies. Please ask an education-related question."
+    
+    user_prompt = f"""
+You are EduTutor, an AI assistant that only helps with education-related topics such as school subjects, studying, homework, exams, learning tips, and academic tools. 
+
+Do not answer questions unrelated to education (like travel, food, entertainment, health, etc.). If the user asks something outside your scope, respond with:
+"I'm here to help with your studies. Please ask an education-related question."
 
 User: {user_input}
-Assistant:"""
+EduTutor:"""
+
     user_prompt = truncate_prompt(user_prompt, max_words=1500)
 
     try:
