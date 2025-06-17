@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EduTutor Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+
+    .sidebar {
+      width: 220px;
+      background-color: #1eade6;
+      padding: 20px;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      font-size: 1.1rem;
+      padding: 10px;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    .sidebar a:hover {
+      background-color: #1586b5;
+    }
+
+    .content {
+      flex: 1;
+      border: none;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>EduTutor</h2>
+    <a href="/chatbot" target="content-frame">Chatbot</a>
+    <a href="/rag" target="content-frame">RAG</a>
+    <a href="/quiz" target="content-frame">Quiz</a>
+  </div>
+  <div class="content">
+    <iframe name="content-frame" src="/chatbot"></iframe>
+  </div>
+</body>
+</html>

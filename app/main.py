@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from app.chatbot import ask_chatbot
 from app.rag import extract_text_from_url, ask_gemini
 from fastapi.staticfiles import StaticFiles
+from app.quiz import generate_quiz_questions
 
 app = FastAPI()
 
@@ -46,3 +47,17 @@ async def rag_extract(url: str = Form(...)):
 async def rag_ask(question: str = Form(...), context: str = Form(...)):
     answer = ask_gemini(question, context)
     return JSONResponse({"answer": answer})
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard(request: Request):
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+@app.get("/quiz", response_class=HTMLResponse)
+async def quiz_page(request: Request):
+    return templates.TemplateResponse("quiz.html", {"request": request})
+
+@app.post("/quiz/api/generate")
+async def generate_quiz(topic: str = Form(...), num_questions: int = Form(...)):
+    questions = generate_quiz_questions(topic, num_questions)
+    return JSONResponse(content=questions)
