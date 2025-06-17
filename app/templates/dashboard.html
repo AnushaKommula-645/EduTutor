@@ -44,11 +44,39 @@
       height: 100%;
       border: none;
     }
+    #heading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 90px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: white;
+      text-decoration: none;
+      font-size: 1.8rem;
+    }
+
+    .logo img {
+      height: 50px;
+      width: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
   </style>
 </head>
 <body>
   <div class="sidebar">
-    <h2>EduTutor</h2>
+    <div id="heading">
+      <a href="#" class="logo">
+        <img src="/static/images/brain.png" alt="EduTutor Logo"> <h1>EduTutor</h1>
+      </a>
+    </div>
+    
     <a href="/chatbot" target="content-frame">Chatbot</a>
     <a href="/rag" target="content-frame">RAG</a>
     <a href="/quiz" target="content-frame">Quiz</a>
