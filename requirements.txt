@@ -5,5 +5,6 @@ httpx                  # For async HTTP requests (optional)
 requests               # For web scraping
 beautifulsoup4
 ibm-watsonx-ai         # Your IBM Watsonx SDK
-google-generativeai    # For Gemini API
+google-genai   # For Gemini API
 python-multipart       # If you want form-data (optional)
+

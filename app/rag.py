@@ -1,25 +1,32 @@
 import requests
 from bs4 import BeautifulSoup
-import google.generativeai as genai
-from dotenv import load_dotenv
+from google import genai
 import os
+from dotenv import load_dotenv
 
-load_dotenv()  # Loads variables from .env
-
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-print("GEMINI_API_KEY:", os.getenv("GEMINI_API_KEY"))
+load_dotenv()
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 def extract_text_from_url(url: str) -> str:
     try:
-        response = requests.get(url)
+        headers = {"User-Agent": "Mozilla/5.0"}
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+
         soup = BeautifulSoup(response.text, 'html.parser')
-        paragraphs = soup.find_all('p')
-        text = ' '.join(p.get_text() for p in paragraphs)
-        return text
+        paragraphs = [p.get_text().strip() for p in soup.find_all('p') if len(p.get_text().strip()) > 40]
+        text = ' '.join(paragraphs)
+        return text[:4000] if len(text) > 4000 else text
     except Exception as e:
-        return f"Error: {e}"
+        return f"Error extracting text: {e}"
 
 def ask_gemini(question: str, context: str) -> str:
-    model = genai.GenerativeModel(model_name="gemini-1.5-flash")
-    response = model.generate_content(f"Context:\n{context}\n\nQuestion:\n{question}")
-    return response.text
+    try:
+        prompt = f"Context:\n{context}\n\nQuestion:\n{question}"
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
+        return response.text
+    except Exception as e:
+        return f"Error calling Gemini API: {e}"
